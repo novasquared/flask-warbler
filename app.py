@@ -4,7 +4,7 @@ from flask import Flask, render_template, request, flash, redirect, session, g
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 
-from forms import CSRFOnlyForm, UserAddForm, LoginForm, MessageForm
+from forms import CSRFOnlyForm, EditUserForm, UserAddForm, LoginForm, MessageForm
 from models import db, connect_db, User, Message
 
 import dotenv
@@ -215,6 +215,18 @@ def profile():
     """Update profile for current user."""
 
     # IMPLEMENT THIS
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+    
+    user = User.query.get(g.user)
+    form = EditUserForm(obj=user)
+
+    ## populate the form with default values except for password. 
+    ## prompt user to enter password before submission and validate
+    ## otherwise, render HTML to go back to user.
+
+
 
 
 @app.post('/users/delete')
