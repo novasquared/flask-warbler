@@ -10,7 +10,7 @@
 
         {% for field in form if
               field.widget.input_type != 'hidden' and
-              field.name != 'validationPassword' %}
+              field.name != 'validate_password' %}
           {% for error in field.errors %}
             <span class="text-danger">{{ error }}</span>
           {% endfor %}
@@ -18,14 +18,14 @@
         {% endfor %}
 
         <p>To confirm changes, enter your password:</p>
-        {% if form.validationPassword.errors %}
-          {% for error in form.validationPassword.errors %}
+        {% if form.validate_password.errors %}
+          {% for error in form.validate_password.errors %}
             <span class="text-danger">
             {{ error }}
           </span>
           {% endfor %}
         {% endif %}
-        {{ form.validationPassword(placeholder="Enter your password to confirm", class="form-control") }}
+        {{ form.validate_password(placeholder="Enter your password to confirm", class="form-control") }}
 
         <div class="edit-btn-area">
           <button class="btn btn-success">Edit this user!</button>
