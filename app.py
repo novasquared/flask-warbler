@@ -2,6 +2,7 @@ import os
 
 from flask import Flask, render_template, request, flash, redirect, session, g
 from flask_debugtoolbar import DebugToolbarExtension
+from flask_bcrypt import Bcrypt
 from sqlalchemy.exc import IntegrityError
 
 from forms import CSRFOnlyForm, EditUserForm, UserAddForm, LoginForm, MessageForm
@@ -13,6 +14,8 @@ dotenv.load_dotenv()
 CURR_USER_KEY = "curr_user"
 
 app = Flask(__name__)
+
+bcrypt=Bcrypt()
 
 # Get DB_URI from environ variable (useful for production/testing) or,
 # if not set there, use development local db.
@@ -214,13 +217,33 @@ def stop_following(follow_id):
 def profile():
     """Update profile for current user."""
 
-    # IMPLEMENT THIS
     if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
-    
-    user = User.query.get(g.user)
+    # breakpoint()
+    user = g.user
     form = EditUserForm(obj=user)
+
+    if form.validate_on_submit():
+        if bcrypt.check_password_hash(user.password, form.validationPassword.data):
+            try:
+                user.username = form.username.data  
+                user.email = form.email.data
+                user.image_url = form.image_url.data or None
+                user.header_image_url = form.header_image_url.data or None
+                user.bio = form.bio.data
+                user.location = form.location.data
+                db.session.commit()
+                return redirect(f"/users/{user.id}")
+            except IntegrityError:
+                flash("Username or email already taken", 'danger')
+                return render_template('users/edit.html', form=form)
+        else:
+            flash("Enter correct password to update profile", 'danger')
+            return render_template('users/edit.html', form=form)
+        
+    else:
+        return render_template("users/edit.html", user=user, form=form)
 
     ## populate the form with default values except for password. 
     ## prompt user to enter password before submission and validate

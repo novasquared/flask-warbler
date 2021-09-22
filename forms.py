@@ -24,8 +24,10 @@ class EditUserForm(FlaskForm):
     email = StringField('E-mail', validators=[DataRequired(), Email()])
     image_url = StringField('(Optional) Image URL')
     header_image_url = StringField('(Optional) Image URL for your Header')
+    location = StringField('(Optional) Your location')
     bio = TextAreaField('(Optional) Add a warbler bio!')
     validate_password = PasswordField('Password', validators=[Length(min=6)])
+
 
 
 class LoginForm(FlaskForm):
