@@ -8,6 +8,28 @@ from flask_sqlalchemy import SQLAlchemy
 bcrypt = Bcrypt()
 db = SQLAlchemy()
 
+## similar to follows, new table with 2 columns:
+## foreign key of user id & foreign key of message ID
+## both of those are primary keys so combo makes 1 PK
+
+
+class Likes(db.Model):
+    """Connection of a user <-> messages liked."""
+
+    __tablename__ = 'likes'
+
+    user_liking_id = db.Column(
+        db.Integer,
+        db.ForeignKey('users.id', ondelete="cascade"),
+        primary_key=True,
+    )
+
+    message_liked_id = db.Column(
+        db.Integer,
+        db.ForeignKey('messages.id', ondelete="cascade"),
+        primary_key=True,
+    )
+
 
 class Follows(db.Model):
     """Connection of a follower <-> followed_user."""
@@ -88,6 +110,23 @@ class User(db.Model):
         secondaryjoin=(Follows.user_being_followed_id == id)
     )
 
+## a db relationship that connects user to their liked messages
+## and connects messages to user that has liked
+
+    likes = db.relationship(
+        "User",
+        secondary="likes",
+        backref = 'messages'
+    )
+
+## message -- one could be has liked, then a couple
+## for what you do in either instance
+## if user has liked message, we allow them to unlike
+## and vice versa
+## if user clicks to like, increment like total
+## if they have liked and click to unlike, decrement
+
+
     def __repr__(self):
         return f"<User #{self.id}: {self.username}, {self.email}>"
 
@@ -102,6 +141,15 @@ class User(db.Model):
 
         found_user_list = [user for user in self.following if user == other_user]
         return len(found_user_list) == 1
+    
+    ## a function to check to see if user has liked
+    def has_liked(self,selected_message):
+        """pass in a message and see if user has liked, return T/F """
+
+        found_liked_list = [message for message in self.likes if message == selected_message]
+        return len(found_liked_list) == 1
+
+
 
     @classmethod
     def signup(cls, username, email, password, image_url):
