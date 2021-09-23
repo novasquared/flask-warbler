@@ -15,7 +15,7 @@ CURR_USER_KEY = "curr_user"
 
 app = Flask(__name__)
 
-bcrypt=Bcrypt()
+bcrypt= Bcrypt()
 
 # Get DB_URI from environ variable (useful for production/testing) or,
 # if not set there, use development local db.
@@ -28,9 +28,16 @@ toolbar = DebugToolbarExtension(app)
 
 connect_db(app)
 
+# TO DO
+# FIX LOG OUT BUTTON FORMAT
+# check post requests for CSRF
+# MAKE SURE WE HAVE if not g.user in all routes if needed
+
 
 ##############################################################################
 # User signup/login/logout
+
+
 
 
 @app.before_request
@@ -87,7 +94,8 @@ def signup():
             db.session.commit()
 
         except IntegrityError:
-            flash("Username already taken", 'danger')
+            db.session.rollback()
+            flash("Username or email already taken", 'danger')
             return render_template('users/signup.html', form=form)
 
         do_login(user)
@@ -122,10 +130,11 @@ def login():
 def logout():
     """Handle logout of user."""
 
-    form = CSRFOnlyForm()
+    form = g.logout_form
 
     if form.validate_on_submit():
         do_logout()
+        flash("User logout successful", 'success')
     
     return redirect("/")
 
@@ -214,43 +223,47 @@ def stop_following(follow_id):
 
 
 @app.route('/users/profile', methods=["GET", "POST"])
-def profile():
+def edit_user_profile():
     """Update profile for current user."""
 
     if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
     # breakpoint()
-    user = g.user
-    form = EditUserForm(obj=user)
+
+    form = EditUserForm(obj=g.user)
 
     if form.validate_on_submit():
-        if bcrypt.check_password_hash(user.password, form.validationPassword.data):
+        #check if entered password is correct, if not, return error
+        if bcrypt.check_password_hash(g.user.password, form.validate_password.data):
+            #try to update details, if integrity error, it's because UN is not unique
             try:
-                user.username = form.username.data  
-                user.email = form.email.data
-                user.image_url = form.image_url.data or None
-                user.header_image_url = form.header_image_url.data or None
-                user.bio = form.bio.data
-                user.location = form.location.data
+                g.user.username = form.username.data  
+                g.user.email = form.email.data
+                g.user.image_url = form.image_url.data or "/static/images/default-pic.png"
+                g.user.header_image_url = form.header_image_url.data or "/static/images/warbler-hero.jpg"
+                g.user.bio = form.bio.data
+                g.user.location = form.location.data
+
                 db.session.commit()
-                return redirect(f"/users/{user.id}")
+
             except IntegrityError:
+                db.session.rollback()
                 flash("Username or email already taken", 'danger')
                 return render_template('users/edit.html', form=form)
+
+            return redirect(f"/users/{g.user.id}")
+
         else:
-            flash("Enter correct password to update profile", 'danger')
+            flash("Invalid credentials", 'danger')
             return render_template('users/edit.html', form=form)
         
     else:
-        return render_template("users/edit.html", user=user, form=form)
+        return render_template("users/edit.html", user=g.user, form=form)
 
     ## populate the form with default values except for password. 
     ## prompt user to enter password before submission and validate
     ## otherwise, render HTML to go back to user.
-
-
-
 
 @app.post('/users/delete')
 def delete_user():
@@ -329,9 +342,14 @@ def homepage():
     - logged in: 100 most recent messages of followed_users
     """
     # form="CSRFOnly"
-    if g.user:
+    if g.user:       
+        # followers = g.user.following, use list comprehension to get ids of those people plus themselves
+        # # then filter for message.user.followers are in that list
+        follower_ids = [u.id for u in g.user.following] + [g.user.id]
+
         messages = (Message
                     .query
+                    .filter(Message.user_id.in_(follower_ids))
                     .order_by(Message.timestamp.desc())
                     .limit(100)
                     .all())

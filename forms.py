@@ -18,7 +18,7 @@ class UserAddForm(FlaskForm):
     image_url = StringField('(Optional) Image URL')
 
 class EditUserForm(FlaskForm):
-    """Form for adding users."""
+    """Form for editing users."""
 
     username = StringField('Username', validators=[DataRequired()])
     email = StringField('E-mail', validators=[DataRequired(), Email()])
