@@ -28,10 +28,6 @@ toolbar = DebugToolbarExtension(app)
 
 connect_db(app)
 
-# TO DO
-# FIX LOG OUT BUTTON FORMAT
-# check post requests for CSRF
-# MAKE SURE WE HAVE if not g.user in all routes if needed
 
 
 ##############################################################################
@@ -51,9 +47,9 @@ def add_user_to_g():
         g.user = None
 
 @app.before_request
-def add_logout_form_to_g():
+def add_CSRF_form_to_g():
     """add CSRFOnlyForm to Flask global."""
-    g.logout_form = CSRFOnlyForm()
+    g.csrf_form = CSRFOnlyForm()
 
 
 def do_login(user):
@@ -80,7 +76,7 @@ def signup():
     If the there already is a user with that username: flash message
     and re-present form.
     """
-
+    
     form = UserAddForm()
 
     if form.validate_on_submit():
@@ -130,7 +126,11 @@ def login():
 def logout():
     """Handle logout of user."""
 
-    form = g.logout_form
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
+    form = g.csrf_form
 
     if form.validate_on_submit():
         do_logout()
@@ -149,6 +149,10 @@ def list_users():
     Can take a 'q' param in querystring to search by that username.
     """
 
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
     search = request.args.get('q')
 
     if not search:
@@ -162,6 +166,10 @@ def list_users():
 @app.get('/users/<int:user_id>')
 def users_show(user_id):
     """Show user profile."""
+
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
 
     user = User.query.get_or_404(user_id)
 
@@ -196,13 +204,16 @@ def users_followers(user_id):
 def add_follow(follow_id):
     """Add a follow for the currently-logged-in user."""
 
+    form = g.csrf_form
+
     if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
-    followed_user = User.query.get_or_404(follow_id)
-    g.user.following.append(followed_user)
-    db.session.commit()
+    if form.validate_on_submit():
+        followed_user = User.query.get_or_404(follow_id)
+        g.user.following.append(followed_user)
+        db.session.commit()
 
     return redirect(f"/users/{g.user.id}/following")
 
@@ -211,13 +222,16 @@ def add_follow(follow_id):
 def stop_following(follow_id):
     """Have currently-logged-in-user stop following this user."""
 
+    form = g.csrf_form
+
     if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
-    followed_user = User.query.get(follow_id)
-    g.user.following.remove(followed_user)
-    db.session.commit()
+    if form.validate_on_submit():
+        followed_user = User.query.get(follow_id)
+        g.user.following.remove(followed_user)
+        db.session.commit()
 
     return redirect(f"/users/{g.user.id}/following")
 
@@ -269,14 +283,17 @@ def edit_user_profile():
 def delete_user():
     """Delete user."""
 
+    form = g.csrf_form
+
     if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
-    do_logout()
+    if form.validate_on_submit():
+        do_logout()
 
-    db.session.delete(g.user)
-    db.session.commit()
+        db.session.delete(g.user)
+        db.session.commit()
 
     return redirect("/signup")
 
@@ -311,6 +328,10 @@ def messages_add():
 def messages_show(message_id):
     """Show a message."""
 
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
     msg = Message.query.get(message_id)
     return render_template('messages/show.html', message=msg)
 
@@ -319,13 +340,16 @@ def messages_show(message_id):
 def messages_destroy(message_id):
     """Delete a message."""
 
+    form = g.csrf_form
+
     if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
-    msg = Message.query.get(message_id)
-    db.session.delete(msg)
-    db.session.commit()
+    if form.validate_on_submit():
+        msg = Message.query.get(message_id)
+        db.session.delete(msg)
+        db.session.commit()
 
     return redirect(f"/users/{g.user.id}")
 
@@ -341,7 +365,7 @@ def homepage():
     - anon users: no messages
     - logged in: 100 most recent messages of followed_users
     """
-    # form="CSRFOnly"
+
     if g.user:       
         # followers = g.user.following, use list comprehension to get ids of those people plus themselves
         # # then filter for message.user.followers are in that list
