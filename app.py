@@ -233,7 +233,52 @@ def stop_following(follow_id):
         g.user.following.remove(followed_user)
         db.session.commit()
 
-    return redirect(f"/users/{g.user.id}/following")
+    return redirect("f"/users/{g.user.id}/following"")
+
+
+@app.get("/users/<int:user_id>/likes")
+def show_user_likes():
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
+    user = User.query.get_or_404(user_id)
+    return render_template("/users/likes.html", user=user)
+
+@app.post('/messages/<int:liked_message_id>/likes')
+def add_like(liked_message_id):
+    """Add a like for the message chosen by the currently-logged-in user."""
+
+    form = g.csrf_form
+
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
+    if form.validate_on_submit():
+        liked_message = Message.query.get_or_404(liked_message_id)
+        g.user.likes.append(liked_message)
+        db.session.commit()
+
+    return redirect("/") #????
+
+
+@app.post('/messages/<int:unliked_message_id>/likes')
+def remove_like(unliked_message_id):
+    """Remove like for the message chosen by the currently-logged-in-user."""
+
+    form = g.csrf_form
+
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
+    if form.validate_on_submit():
+        unliked_message = Message.query.get(unliked_message_id)
+        g.user.likes.remove(unliked_message)
+        db.session.commit()
+
+    return redirect("/")  # ?????
 
 
 @app.route('/users/profile', methods=["GET", "POST"])
@@ -377,7 +422,7 @@ def homepage():
                     .order_by(Message.timestamp.desc())
                     .limit(100)
                     .all())
-
+        # breakpoint()
         return render_template('home.html', messages=messages)
 
     else:

@@ -42,6 +42,11 @@ body.error-404 {
   font-size: 13px;
   font-weight: bold;
 }
+
+.fa-thumbs-up {
+  z-index: 1;
+}
+
 .navbar a:hover {
   color: #1c94e0;
 }
