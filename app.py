@@ -233,7 +233,7 @@ def stop_following(follow_id):
         g.user.following.remove(followed_user)
         db.session.commit()
 
-    return redirect("f"/users/{g.user.id}/following"")
+    return redirect(f"/users/{g.user.id}/following")
 
 
 @app.get("/users/<int:user_id>/likes")
@@ -245,7 +245,7 @@ def show_user_likes():
     user = User.query.get_or_404(user_id)
     return render_template("/users/likes.html", user=user)
 
-@app.post('/messages/<int:liked_message_id>/likes')
+@app.post('/messages/likes/<int:liked_message_id>')
 def add_like(liked_message_id):
     """Add a like for the message chosen by the currently-logged-in user."""
 
@@ -256,14 +256,17 @@ def add_like(liked_message_id):
         return redirect("/")
 
     if form.validate_on_submit():
+        print("got to the validation inside liked message")
         liked_message = Message.query.get_or_404(liked_message_id)
+        print("this is liked message", liked_message)
         g.user.likes.append(liked_message)
+        print("this is the list of user likes", g.user.likes)
         db.session.commit()
 
     return redirect("/") #????
 
 
-@app.post('/messages/<int:unliked_message_id>/likes')
+@app.post('/messages/unlikes/<int:unliked_message_id>')
 def remove_like(unliked_message_id):
     """Remove like for the message chosen by the currently-logged-in-user."""
 
@@ -418,7 +421,7 @@ def homepage():
 
         messages = (Message
                     .query
-                    .filter(Message.user_id.in_(follower_ids))
+                    # .filter(Message.user_id.in_(follower_ids))
                     .order_by(Message.timestamp.desc())
                     .limit(100)
                     .all())

@@ -4,6 +4,7 @@ from datetime import datetime
 
 from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import backref
 
 bcrypt = Bcrypt()
 db = SQLAlchemy()
@@ -110,16 +111,23 @@ class User(db.Model):
         secondaryjoin=(Follows.user_being_followed_id == id)
     )
 
-## a db relationship that connects users to their liked messages
+
 
     likes = db.relationship(
-        "User",
-        secondary="likes",
-        # backref = 'liked_messages'
-        primaryjoin=(Likes.user_liking_id == id),
-        secondaryjoin=(Likes.message_liked_id == id)
+        "Message",
+        secondary='likes'
     )
 
+
+## a db relationship that connects users to their liked messages
+
+    # likes = db.relationship(
+    #     "User",
+    #     secondary="likes",
+    #     # backref = 'liked_messages'
+    #     primaryjoin=(Likes.user_liking_id == id),
+    #     secondaryjoin=(Likes.message_liked_id == id)
+    # )
 
 ## message -- one could be has liked, then a couple
 ## for what you do in either instance
@@ -223,13 +231,13 @@ class Message(db.Model):
     user = db.relationship('User')
 
     ## a db relationship that connects a messages to the users that have liked the message
-    message_likes = db.relationship(
-        "Message",
-        secondary="likes",
-        # backref = 'liked_messages'
-        primaryjoin=(Likes.message_liked_id == id),
-        secondaryjoin=(Likes.user_liking_id == id)
-    )
+    # message_likes = db.relationship(
+    #     "Message",
+    #     secondary="likes",
+    #     # backref = 'liked_messages'
+    #     primaryjoin=(Likes.message_liked_id == id),
+    #     secondaryjoin=(Likes.user_liking_id == id)
+    # )
 
 def connect_db(app):
     """Connect this database to provided Flask app.
