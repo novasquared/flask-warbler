@@ -237,17 +237,19 @@ def stop_following(follow_id):
 
 
 @app.get("/users/<int:user_id>/likes")
-def show_user_likes():
+def show_user_likes(user_id):
+    """Show likes page for the currently-logged-in user."""
     if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
     user = User.query.get_or_404(user_id)
-    return render_template("/users/likes.html", user=user)
+    return render_template("/users/liked_messages.html", user=user)
 
-@app.post('/messages/likes/<int:liked_message_id>')
-def add_like(liked_message_id):
+@app.post('/messages/likes/<int:unliked_message_id>')
+def add_like(unliked_message_id):
     """Add a like for the message chosen by the currently-logged-in user."""
+    # TODO: like and unlike could be handled as functions on the model.
 
     form = g.csrf_form
 
@@ -256,18 +258,15 @@ def add_like(liked_message_id):
         return redirect("/")
 
     if form.validate_on_submit():
-        print("got to the validation inside liked message")
-        liked_message = Message.query.get_or_404(liked_message_id)
-        print("this is liked message", liked_message)
-        g.user.likes.append(liked_message)
-        print("this is the list of user likes", g.user.likes)
+        unliked_message = Message.query.get_or_404(unliked_message_id)
+        g.user.liked_messages.append(unliked_message)
         db.session.commit()
 
-    return redirect("/") #????
+    return redirect(f"/users/{g.user.id}/likes") 
 
 
-@app.post('/messages/unlikes/<int:unliked_message_id>')
-def remove_like(unliked_message_id):
+@app.post('/messages/unlikes/<int:liked_message_id>')
+def remove_like(liked_message_id):
     """Remove like for the message chosen by the currently-logged-in-user."""
 
     form = g.csrf_form
@@ -277,11 +276,11 @@ def remove_like(unliked_message_id):
         return redirect("/")
 
     if form.validate_on_submit():
-        unliked_message = Message.query.get(unliked_message_id)
-        g.user.likes.remove(unliked_message)
+        liked_message = Message.query.get(liked_message_id)
+        g.user.liked_messages.remove(liked_message)
         db.session.commit()
 
-    return redirect("/")  # ?????
+    return redirect(f"/users/{g.user.id}/likes")
 
 
 @app.route('/users/profile', methods=["GET", "POST"])

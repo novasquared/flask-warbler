@@ -1,53 +1,53 @@
 {% extends 'users/detail.html' %}
 {% block user_details %}
-  <div class="col-sm-6">
-    <ul class="list-group" id="messages">
+<div class="col-sm-6">
+  <ul class="list-group" id="messages">
 
-      {% for message in user.messages %}
+    {% for message in user.messages %}
 
-        <li class="list-group-item">
-          <a href="/messages/{{ message.id }}" class="message-link"/>
+    <li class="list-group-item">
+      <a href="/messages/{{ message.id }}" class="message-link" />
 
-          <a href="/users/{{ user.id }}">
-            <img src="{{ user.image_url }}" alt="user image" class="timeline-image">
-          </a>
+      <a href="/users/{{ user.id }}">
+        <img src="{{ user.image_url }}" alt="user image" class="timeline-image">
+      </a>
 
-          <div class="message-area">
-            <a href="/users/{{ user.id }}">@{{ user.username }}</a>
-            <span class="text-muted">
-              {{ message.timestamp.strftime('%d %B %Y') }}
-            </span>
-            <p>{{ message.text }}</p>
-            
-
-            {% if g.user.id != message.user.id %}
-            {% if g.user.has_liked(message) %}
-            <form method="POST" action="/messages/unlikes/{{ message.id }}">
-              {{ g.csrf_form.hidden_tag() }}
-              <button class="btn btn-default">
-                <span class="fas fa-thumbs-up"> You like this!</span>
-              </button>
-            </form>
-  
-            {% else %}
-  
-            <form method="POST" action="/messages/likes/{{ message.id }}">
-              {{ g.csrf_form.hidden_tag() }}
-              <button class="btn btn-default">
-                <span class="far fa-thumbs-up"></span>
-              </button>
-            </form>
-            {% endif %}
-  
-            {% endif %}
+      <div class="message-area">
+        <a href="/users/{{ user.id }}">@{{ user.username }}</a>
+        <span class="text-muted">
+          {{ message.timestamp.strftime('%d %B %Y') }}
+        </span>
+        <p>{{ message.text }}</p>
 
 
+        {% if g.user.id != message.user.id %}
+        {% if g.user.has_liked(message) %}
+        <form method="POST" action="/messages/unlikes/{{ message.id }}">
+          {{ g.csrf_form.hidden_tag() }}
+          <button class="btn btn-default">
+            <span class="fas fa-thumbs-up"> You like this!</span>
+          </button>
+        </form>
 
-          </div>
-        </li>
+        {% else %}
 
-      {% endfor %}
+        <form method="POST" action="/messages/likes/{{ message.id }}">
+          {{ g.csrf_form.hidden_tag() }}
+          <button class="btn btn-default">
+            <span class="far fa-thumbs-up"></span>
+          </button>
+        </form>
+        {% endif %}
 
-    </ul>
-  </div>
+        {% endif %}
+
+
+
+      </div>
+    </li>
+
+    {% endfor %}
+
+  </ul>
+</div>
 {% endblock %}

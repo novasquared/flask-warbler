@@ -111,23 +111,12 @@ class User(db.Model):
         secondaryjoin=(Follows.user_being_followed_id == id)
     )
 
-
-
-    likes = db.relationship(
+    # change to liked_messages
+    liked_messages = db.relationship(
         "Message",
         secondary='likes'
     )
 
-
-## a db relationship that connects users to their liked messages
-
-    # likes = db.relationship(
-    #     "User",
-    #     secondary="likes",
-    #     # backref = 'liked_messages'
-    #     primaryjoin=(Likes.user_liking_id == id),
-    #     secondaryjoin=(Likes.message_liked_id == id)
-    # )
 
 ## message -- one could be has liked, then a couple
 ## for what you do in either instance
@@ -156,10 +145,8 @@ class User(db.Model):
     def has_liked(self,selected_message):
         """pass in a message and see if user has liked, return T/F """
 
-        found_liked_list = [message for message in self.likes if message == selected_message]
+        found_liked_list = [message for message in self.liked_messages if message == selected_message]
         return len(found_liked_list) == 1
-
-
 
     @classmethod
     def signup(cls, username, email, password, image_url):
@@ -229,15 +216,6 @@ class Message(db.Model):
     )
 
     user = db.relationship('User')
-
-    ## a db relationship that connects a messages to the users that have liked the message
-    # message_likes = db.relationship(
-    #     "Message",
-    #     secondary="likes",
-    #     # backref = 'liked_messages'
-    #     primaryjoin=(Likes.message_liked_id == id),
-    #     secondaryjoin=(Likes.user_liking_id == id)
-    # )
 
 def connect_db(app):
     """Connect this database to provided Flask app.
